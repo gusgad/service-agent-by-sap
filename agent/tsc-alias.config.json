@@ -1,0 +1,7 @@
+{
+  "resolveFullPaths": true,
+  "verbose": true,
+  "replacers": {
+    "^(\\./.*|\\.\\./.*)(?<!\\.(js|json))$": "$1.js"
+  }
+}

@@ -1,0 +1,109 @@
+<div *ngIf="visible && job" class="modal-overlay" (click)="closeModal()" aria-hidden="true">
+  <div class="modal-content modal-transition" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-header">
+      <h3 id="modal-title">Job Details - {{ job.name }}</h3>
+      <button (click)="closeModal()" class="close-btn" aria-label="Close">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="detail-row">
+        <strong>ID:</strong> {{ job.id }}
+      </div>
+      <div class="detail-row">
+        <strong>Status:</strong> 
+        <span class="status" [ngClass]="'status-' + job.status">
+          {{ job.status | titlecase }}
+        </span>
+      </div>
+      <div class="detail-row">
+        <strong>Submitted:</strong> {{ job.createdAt | date:'long' }}
+      </div>
+      <div class="detail-row">
+        <strong>Execution:</strong> 
+        <span *ngIf="job.completedAt">{{ job.completedAt | date:'long' }}</span>
+        <span *ngIf="!job.completedAt && job.scheduledAt">{{ job.scheduledAt | date:'long' }} (Scheduled)</span>
+        <span *ngIf="!job.completedAt && !job.scheduledAt">Immediate</span>
+      </div>
+      <div class="detail-row">
+        <strong>Request Type:</strong> {{ job.serviceType.toUpperCase() }}
+      </div>
+      <div class="detail-row" *ngIf="job.serviceType === 'http'">
+        <strong>URL:</strong> {{ job.url }}
+      </div>
+      <div class="detail-row" *ngIf="job.serviceType === 'http'">
+        <strong>Method:</strong> {{ job.method }}
+      </div>
+      <div class="detail-row" *ngIf="job.serviceType === 'messaging'">
+        <strong>Topic:</strong> {{ job.topic }}
+      </div>
+      <div class="detail-row">
+        <strong>Headers:</strong>
+        <div class="headers-table request-headers">
+          <div class="headers-row header">
+            <div class="header-key">Key</div>
+            <div class="header-value">Value</div>
+          </div>
+          
+          <div class="headers-row" *ngFor="let header of requestHeaders">
+            <div class="header-key">{{ header.key }}</div>
+            <div class="header-value">{{ header.value }}</div>
+          </div>
+          
+          <div *ngIf="requestHeaders.length === 0" class="headers-row empty">
+            <div class="header-empty">No headers</div>
+          </div>
+        </div>
+      </div>
+      <div class="detail-row">
+        <strong>Body:</strong>
+        <div class="json-editor-container">
+          <code-editor
+            [(ngModel)]="requestBodyText"
+            class="json-editor"
+            [disabled]="true"
+            [lineWrapping]="true"
+            [readonly]="true"
+          ></code-editor>
+        </div>
+      </div>
+      <div *ngIf="job.errorMessage" class="detail-row error">
+        <strong>Error:</strong> {{ job.errorMessage }}
+      </div>
+      
+      <!-- Response Section -->
+      <div *ngIf="job.response" class="detail-section">
+        <h4>Response</h4>
+        <div class="detail-row">
+          <strong>Response Body:</strong>
+          <div class="json-editor-container">
+            <code-editor
+              [(ngModel)]="responseBodyText"
+              class="json-editor"
+              [disabled]="true"
+              [lineWrapping]="true"
+              [readonly]="true"
+            ></code-editor>
+          </div>
+        </div>
+        
+        <div class="detail-row">
+          <strong>Response Headers:</strong>
+          <div class="headers-table response-headers">
+            <div class="headers-row header">
+              <div class="header-key">Key</div>
+              <div class="header-value">Value</div>
+            </div>
+            
+            <div class="headers-row" *ngFor="let header of responseHeaders">
+              <div class="header-key">{{ header.key }}</div>
+              <div class="header-value">{{ header.value }}</div>
+            </div>
+            
+            <div *ngIf="responseHeaders.length === 0" class="headers-row empty">
+              <div class="header-empty">No headers</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

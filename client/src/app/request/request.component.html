@@ -1,0 +1,277 @@
+<div class="request-form page-transition">  
+  <form (ngSubmit)="onSubmit()" #requestForm="ngForm">
+    <div class="form-layout">
+      <!-- Left Column -->
+      <div class="form-column">
+        <div class="form-section">
+          <div class="form-group">
+            <label for="name">Name</label>
+            <input 
+              type="text" 
+              id="name" 
+              name="name" 
+              [(ngModel)]="request.name" 
+              required 
+              aria-required="true"
+              placeholder="Enter Name"
+              class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label for="serviceType">Request Type</label>
+            <select id="serviceType" name="serviceType" [(ngModel)]="request.serviceType" class="form-control">
+              <option [value]="ServiceType.HTTP">HTTP</option>
+              <option [value]="ServiceType.MESSAGING">Messaging</option>
+            </select>
+          </div>
+
+          <!-- HTTP Details -->
+          <div *ngIf="request.serviceType === ServiceType.HTTP" class="form-group">
+            <label id="api-details-label">API Details</label>
+            <div class="http-details" aria-labelledby="api-details-label">
+              <div class="method-select">
+                <select id="method" name="method" [(ngModel)]="request.method" (ngModelChange)="onMethodChange()" class="form-control">
+                  <option [value]="HttpMethod.GET">GET</option>
+                  <option [value]="HttpMethod.POST">POST</option>
+                  <option [value]="HttpMethod.PUT">PUT</option>
+                  <option [value]="HttpMethod.DELETE">DELETE</option>
+                </select>
+              </div>
+              
+              <div class="url-input">
+                <input 
+                  type="url" 
+                  id="url" 
+                  name="url" 
+                  [(ngModel)]="request.url" 
+                  [required]="request.serviceType === ServiceType.HTTP"
+                  placeholder="API endpoint"
+                  class="form-control">
+              </div>
+            </div>
+          </div>
+
+          <!-- Messaging Topic -->
+          <div *ngIf="request.serviceType === ServiceType.MESSAGING" class="form-group">
+            <label for="topic">Topic</label>
+            <input 
+              type="text" 
+              id="topic" 
+              name="topic" 
+              [(ngModel)]="request.topic" 
+              [required]="request.serviceType === ServiceType.MESSAGING"
+              placeholder="my-topic"
+              class="form-control">
+          </div>
+
+          <!-- Headers -->
+          <div class="form-group">
+            <label id="headers-label">Headers</label>
+            <div class="headers-table" aria-labelledby="headers-label">
+              <div class="headers-row header">
+                <div class="header-key">Key</div>
+                <div class="header-value">Value</div>
+              </div>
+              
+              <div class="headers-row" *ngFor="let row of headerRows; let i = index">
+                <div class="header-key">
+                  <input 
+                    type="text" 
+                    [(ngModel)]="row.key" 
+                    [name]="'headerKey' + i"
+                    placeholder="Enter Key"
+                    class="form-control">
+                </div>
+                <div class="header-value">
+                  <input 
+                    type="text" 
+                    [(ngModel)]="row.value" 
+                    [name]="'headerValue' + i"
+                    placeholder="Enter Value"
+                    class="form-control">
+                </div>
+              </div>
+            </div>
+            
+            <button type="button" class="btn btn-secondary" (click)="addHeaderRow()" aria-label="Add header row">
+              + Add Row
+            </button>
+          </div>
+
+          <!-- Execution -->
+          <div class="form-group">
+            <label id="execution-label">Execution</label>
+            <div class="radio-group" role="radiogroup" aria-labelledby="execution-label">
+              <div class="radio-option">
+                <input 
+                  type="radio" 
+                  id="executionImmediate" 
+                  name="executionType" 
+                  [value]="ExecutionType.IMMEDIATE" 
+                  [(ngModel)]="request.executionType">
+                <label for="executionImmediate">Execute now</label>
+              </div>
+              
+              <div class="radio-option">
+                <input 
+                  type="radio" 
+                  id="executionScheduled" 
+                  name="executionType" 
+                  [value]="ExecutionType.SCHEDULED" 
+                  [(ngModel)]="request.executionType">
+                <label for="executionScheduled">Schedule</label>
+              </div>
+            </div>
+            
+            <div *ngIf="request.executionType === ExecutionType.SCHEDULED" class="scheduled-inputs">
+              <div class="datetime-row">
+                <div class="date-field">
+                  <input 
+                    type="date" 
+                    id="scheduledDate" 
+                    name="scheduledDate" 
+                    [(ngModel)]="request.scheduledDate"
+                    required
+                    aria-required="true"
+                    class="form-control">
+                </div>
+                
+                <div class="time-field">
+                  <input 
+                    type="text" 
+                    id="scheduledHours" 
+                    name="scheduledHours" 
+                    [(ngModel)]="request.scheduledHours"
+                    required
+                    aria-required="true"
+                    pattern="([01]?[0-9]|2[0-3])"
+                    maxlength="2"
+                    placeholder="HH"
+                    class="form-control">
+                </div>
+                
+                <div class="time-separator">:</div>
+                
+                <div class="time-field">
+                  <input 
+                    type="text" 
+                    id="scheduledMinutes" 
+                    name="scheduledMinutes" 
+                    [(ngModel)]="request.scheduledMinutes"
+                    required
+                    aria-required="true"
+                    pattern="[0-5][0-9]"
+                    maxlength="2"
+                    placeholder="MM"
+                    class="form-control">
+                </div>
+                
+                <div class="time-separator">:</div>
+                
+                <div class="time-field">
+                  <input 
+                    type="text" 
+                    id="scheduledSeconds" 
+                    name="scheduledSeconds" 
+                    [(ngModel)]="request.scheduledSeconds"
+                    required
+                    aria-required="true"
+                    pattern="[0-5][0-9]"
+                    maxlength="2"
+                    placeholder="SS"
+                    class="form-control">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="submit" [disabled]="!requestForm.form.valid || loading" class="btn btn-primary" aria-live="polite">
+              {{ loading ? 'Submitting...' : 'Submit' }}
+            </button>
+          </div>
+          
+          <div *ngIf="result" class="result" [ngClass]="{'success': result.success, 'error': !result.success}" aria-live="assertive">
+            <div class="result-message">{{ result.message }}</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column -->
+      <div class="form-column">
+        <div class="form-section">          
+          <div class="form-group">
+            <label for="body" id="body-label">{{ request.serviceType === ServiceType.MESSAGING ? 'Message' : 'Body' }}</label>
+            <div class="json-editor-container" [class.disabled]="request.serviceType === ServiceType.HTTP && (request.method === HttpMethod.GET || request.method === HttpMethod.DELETE)">
+              <div *ngIf="request.serviceType === ServiceType.HTTP && (request.method === HttpMethod.GET || request.method === HttpMethod.DELETE)" class="editor-overlay">
+                <p>No body needed for {{ request.method }} requests</p>
+              </div>
+              <code-editor
+                id="body"
+                name="body"
+                [(ngModel)]="bodyText"
+                class="json-editor"
+                [disabled]="request.serviceType === ServiceType.HTTP && (request.method === HttpMethod.GET || request.method === HttpMethod.DELETE)"
+                [lineWrapping]="true"
+                [indentWithTab]="true"
+                aria-labelledby="body-label"
+              ></code-editor>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+
+  <!-- Result message is now moved to the form section with aria-live -->
+  
+  <!-- Response Section -->
+  <div *ngIf="result && result.success && (responseData?.response || responseData?.responseHeaders)" class="response-section" aria-live="polite">
+    <h2 id="response-heading">Response</h2>
+    
+    <div class="form-layout">
+      <!-- Response Body Column -->
+      <div class="form-column">
+        <div class="form-section">
+          <div class="form-group">
+            <label id="response-body-label">Response Body</label>
+            <div class="json-editor-container">
+              <code-editor
+                [(ngModel)]="responseBodyText"
+                class="json-editor"
+                [disabled]="true"
+                [lineWrapping]="true"
+                [readonly]="true"
+                aria-labelledby="response-body-label"
+              ></code-editor>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- Response Headers Column -->
+      <div class="form-column">
+        <div class="form-section">
+          <div class="form-group">
+            <label id="response-headers-label">Response Headers</label>
+            <div class="headers-table response-headers" aria-labelledby="response-headers-label">
+              <div class="headers-row header">
+                <div class="header-key">Key</div>
+                <div class="header-value">Value</div>
+              </div>
+              
+              <div class="headers-row" *ngFor="let header of responseHeaders">
+                <div class="header-key">{{ header.key }}</div>
+                <div class="header-value">{{ header.value }}</div>
+              </div>
+              
+              <div *ngIf="responseHeaders.length === 0" class="headers-row empty">
+                <div class="header-empty">No headers</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

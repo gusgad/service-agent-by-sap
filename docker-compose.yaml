@@ -1,0 +1,87 @@
+services:
+  client:
+    build: ./client
+    ports:
+      - '4200:80'
+    stdin_open: true
+    tty: true
+    depends_on:
+      - agent
+
+  agent:
+    build: ./agent
+    ports:
+      - '3000:3000'
+    environment:
+      - KAFKA_BROKER=kafka:9092
+      - SCHEDULER_CRON=* * * * *
+      - USE_MOCK=true
+    depends_on:
+      kafka:
+        condition: service_healthy
+      postgres:
+        condition: service_started
+
+  agent-consumer:
+    build: ./consumer
+    environment:
+      - KAFKA_BROKER=kafka:9092
+      - KAFKA_FROM_BEGINNING=true
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: on-failure
+
+  postgres:
+    image: postgres:14
+    container_name: postgres
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: jobs
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  zookeeper:
+    image: bitnami/zookeeper:3.8
+    container_name: zookeeper
+    ports:
+      - '2181:2181'
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: 'yes'
+
+  kafka:
+    image: bitnami/kafka:3.6
+    container_name: kafka
+    ports:
+      - '9092:9092'
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      ALLOW_PLAINTEXT_LISTENER: 'yes'
+    depends_on:
+      - zookeeper
+    healthcheck:
+      test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list"]
+      interval: 5s
+      timeout: 10s
+      retries: 5
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    ports:
+      - '8080:8080'
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    depends_on:
+      - kafka
+
+volumes:
+  pgdata:

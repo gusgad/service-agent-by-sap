@@ -1,0 +1,119 @@
+<div class="status-page page-transition">
+  <div class="header">
+    <h2>List of all jobs</h2>
+    <div class="controls">
+      <input 
+        type="text" 
+        id="search-input"
+        [(ngModel)]="searchText" 
+        (input)="onSearchChange()" 
+        placeholder="Search jobs..." 
+        class="search-input"
+        aria-label="Search jobs">
+      <button (click)="toggleShowFavorites()" class="favorites-btn" [attr.aria-pressed]="showFavoritesOnly">
+        <span class="star-icon" aria-hidden="true">{{ showFavoritesOnly ? '★' : '☆' }}</span>
+        {{ showFavoritesOnly ? 'Show All' : 'Show Favorites' }}
+      </button>
+    </div>
+  </div>
+
+  <div *ngIf="loading" class="loading" aria-live="polite">
+    Loading jobs...
+  </div>
+  
+  <div *ngIf="jobs.length === 0 && !loading" class="no-jobs" aria-live="polite">
+    No jobs found. Create a request first.
+  </div>
+    
+  <div class="jobs-table-container">
+    <table class="jobs-table" aria-label="Jobs list">
+      <thead>
+        <tr>
+          <th class="star-column" scope="col"></th>
+          <th scope="col">ID</th>
+          <th scope="col">Job Name</th>
+          <th scope="col">Submitted</th>
+          <th scope="col">Execution</th>
+          <th scope="col">Status</th>
+          <th class="actions-column" scope="col"></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let job of filteredJobs">
+          <td class="star-column">
+            <button (click)="toggleFavorite(job.id!)" class="star-btn" [class.favorited]="isFavorite(job.id!)" [attr.aria-label]="isFavorite(job.id!) ? 'Remove from favorites' : 'Add to favorites'" [attr.aria-pressed]="isFavorite(job.id!)">
+              {{ isFavorite(job.id!) ? '★' : '☆' }}
+            </button>
+          </td>
+          <td>
+            <div class="id-column" [title]="job.id">{{ job.id }}</div>
+          </td>
+          <td>
+            <div class="name-column" [title]="job.name">{{ job.name }}</div>
+          </td>
+          <td>
+            <div class="date-column" [title]="job.createdAt | date:'medium'">{{ job.createdAt | date:'mediumDate' }}</div>
+          </td>
+          <td>
+            <div class="date-column">
+              <span *ngIf="job.completedAt" [title]="job.completedAt | date:'medium'">{{ job.completedAt | date:'mediumDate' }}</span>
+              <span *ngIf="!job.completedAt && job.scheduledAt" [title]="job.scheduledAt | date:'medium'">{{ job.scheduledAt | date:'mediumDate' }}</span>
+              <span *ngIf="!job.completedAt && !job.scheduledAt">Immediate</span>
+            </div>
+          </td>
+          <td>
+            <span class="status" [ngClass]="'status-' + job.status">
+              {{ job.status | titlecase }}
+            </span>
+          </td>
+          <td class="actions-column">
+            <button (click)="showJobDetails(job)" class="btn btn-outline">Details</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Job Details Modal -->
+  <app-job-details-modal
+    [job]="selectedJob"
+    [visible]="showDetails"
+    (close)="closeDetails()"
+  ></app-job-details-modal>
+  
+  <!-- Simplified Pagination Controls (Bottom) -->
+  <div class="pagination-container" *ngIf="totalItems > 0">
+    <div class="pagination-controls">
+      <div class="pagination-row">
+        <div class="page-size">
+          <label for="page-size-select">Items per page:</label>
+          <select id="page-size-select" [(ngModel)]="itemsPerPage" (change)="changePageSize(itemsPerPage)" class="form-control">
+            <option *ngFor="let size of pageSizeOptions" [value]="size">{{ size }}</option>
+          </select>
+        </div>
+        
+        <div class="page-info" aria-live="polite">
+          {{ (currentPage - 1) * itemsPerPage + 1 }}-{{ Math.min(currentPage * itemsPerPage, totalItems) }} of {{ totalItems }}
+        </div>
+        
+        <div class="pagination" *ngIf="totalPages > 1">
+          <button 
+            class="page-btn" 
+            [disabled]="currentPage === 1" 
+            (click)="changePage(currentPage - 1)"
+            aria-label="Previous page">
+            <span aria-hidden="true">&lsaquo;</span>
+          </button>
+          
+          <button 
+            class="page-btn" 
+            [disabled]="currentPage === totalPages" 
+            (click)="changePage(currentPage + 1)"
+            aria-label="Next page">
+            <span aria-hidden="true">&rsaquo;</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
